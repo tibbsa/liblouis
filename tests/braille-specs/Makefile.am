@@ -1,4 +1,4 @@
-EXTRA_DIST =					\
+TESTS =						\
 	ar-ar-g1_harness.yaml			\
 	ar-fa_harness.yaml			\
 	chr-us-g1_harness.yaml			\
@@ -53,13 +53,13 @@ EXTRA_DIST =					\
 	hr-8dots_harness.yaml			\
 	hu-hu-comp8_backward.yaml		\
 	hu-hu-comp8_harness.yaml		\
-	hu-hu-g1-hyph_harness.yaml		\
 	hu-hu-g1_backward.yaml			\
 	hu-hu-g1_harness.yaml			\
 	iu-ca-g1_harness.yaml			\
 	ko-2006-g2_harness.yaml			\
 	ko-g2_harness.yaml			\
 	lt_harness.yaml				\
+	lv_harness.yaml				\
 	mn-MN_harness.yaml			\
 	nl-NL-g0_harness.yaml			\
 	nl-g0_harness.yaml			\
@@ -74,3 +74,12 @@ EXTRA_DIST =					\
 	vi-g1_backward.yaml			\
 	vi-g1_harness.yaml			\
 	zh-chn.yaml
+
+TEST_EXTENSIONS = .yaml
+YAML_LOG_COMPILER =  $(WINE) $(top_builddir)/tools/lou_checkyaml$(EXEEXT)
+
+EXTRA_DIST = $(TESTS)
+
+AM_TESTS_ENVIRONMENT =								\
+	LOUIS_TABLEPATH=$(abs_top_srcdir)/tables				\
+	LD_LIBRARY_PATH=$(top_builddir)/liblouis/.libs:$$LD_LIBRARY_PATH
