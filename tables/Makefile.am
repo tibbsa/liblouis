@@ -57,7 +57,6 @@ table_files = \
 	da-dk-g28l.ctb \
 	da-dk-octobraille.dis \
 	da-lt.ctb \
-	da.tbl \
 	de-ch-accents.cti \
 	de-chardefs6.cti \
 	de-chardefs8.cti \
