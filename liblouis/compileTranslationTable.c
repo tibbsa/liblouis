@@ -105,7 +105,7 @@ typedef struct DisplayTableChainEntry {
 
 static DisplayTableChainEntry *displayTableChain = NULL;
 
-/* predifined character classes */
+/* predefined character classes */
 static const char *characterClassNames[] = {
 	"space",
 	"letter",
@@ -116,6 +116,39 @@ static const char *characterClassNames[] = {
 	"math",
 	"sign",
 	"litdigit",
+	NULL,
+};
+
+// names that may not be used for custom attributes
+static const char *reservedAttributeNames[] = {
+	"numericnocontchars",
+	"numericnocontchar",
+	"numericnocont",
+	"midendnumericmodechars",
+	"midendnumericmodechar",
+	"midendnumericmode",
+	"numericmodechars",
+	"numericmodechar",
+	"numericmode",
+	"capsmodechars",
+	"capsmodechar",
+	"capsmode",
+	"emphmodechars",
+	"emphmodechar",
+	"emphmode",
+	"noemphchars",
+	"noemphchar",
+	"noemph",
+	"seqdelimiter",
+	"seqbeforechars",
+	"seqbeforechar",
+	"seqbefore",
+	"seqafterchars",
+	"seqafterchar",
+	"seqafter",
+	"noletsign",
+	"noletsignbefore",
+	"noletsignafter",
 	NULL,
 };
 
@@ -155,6 +188,7 @@ static const char *opcodeNames[CTO_None] = {
 	"lenemphphrase",
 	"capsmodechars",
 	"emphmodechars",
+	"noemphchars",
 	"begcomp",
 	"compbegemph1",
 	"compendemph1",
@@ -709,7 +743,7 @@ passFindCharacters(FileInfo *nested, widechar *instructions, int end,
 		}
 
 		case pass_attributes:
-			IC += 5;
+			IC += 7;
 			if (instructions[IC - 2] == instructions[IC - 1] &&
 					instructions[IC - 1] <= lookback) {
 				lookback -= instructions[IC - 1];
@@ -1026,28 +1060,44 @@ findCharacterClass(const CharsString *name, const TranslationTableHeader *table)
 	return NULL;
 }
 
+static TranslationTableCharacterAttributes
+getNextNumberedAttribute(TranslationTableHeader *table) {
+	/* Get the next attribute value for numbered attributes, or 0 if there is no more
+	 * space in the table. */
+	TranslationTableCharacterAttributes next = table->nextNumberedCharacterClassAttribute;
+	if (next > CTC_UserDefined8) return 0;
+	table->nextNumberedCharacterClassAttribute <<= 1;
+	return next;
+}
+
+static TranslationTableCharacterAttributes
+getNextAttribute(TranslationTableHeader *table) {
+	/* Get the next attribute value, or 0 if there is no more space in the table. */
+	TranslationTableCharacterAttributes next = table->nextCharacterClassAttribute;
+	if (next) {
+		if (next == CTC_LitDigit)
+			table->nextCharacterClassAttribute = CTC_UserDefined9;
+		else
+			table->nextCharacterClassAttribute <<= 1;
+		return next;
+	} else
+		return getNextNumberedAttribute(table);
+}
+
 static CharacterClass *
 addCharacterClass(FileInfo *nested, const widechar *name, int length,
 		TranslationTableHeader *table) {
 	/* Define a character class, Whether predefined or user-defined */
 	CharacterClass **classes = &table->characterClasses;
-	;
-	TranslationTableCharacterAttributes *nextAttribute =
-			&table->nextCharacterClassAttribute;
+	TranslationTableCharacterAttributes attribute = getNextAttribute(table);
 	CharacterClass *class;
-	if (*nextAttribute) {
+	if (attribute) {
 		if (!(class = malloc(sizeof(*class) + CHARSIZE * (length - 1))))
 			_lou_outOfMemory();
 		else {
 			memset(class, 0, sizeof(*class));
 			memcpy(class->name, name, CHARSIZE * (class->length = length));
-			class->attribute = *nextAttribute;
-			if (*nextAttribute == CTC_Class4)
-				*nextAttribute = CTC_UserDefined0;
-			else if (*nextAttribute == CTC_UserDefined7)
-				*nextAttribute = CTC_Class13;
-			else
-				*nextAttribute <<= 1;
+			class->attribute = attribute;
 			class->next = *classes;
 			*classes = class;
 			return class;
@@ -1069,10 +1119,11 @@ deallocateCharacterClasses(TranslationTableHeader *table) {
 
 static int
 allocateCharacterClasses(TranslationTableHeader *table) {
-	/* Allocate memory for predifined character classes */
+	/* Allocate memory for predefined character classes */
 	int k = 0;
 	table->characterClasses = NULL;
-	table->nextCharacterClassAttribute = 1;
+	table->nextCharacterClassAttribute = 1;  // CTC_Space
+	table->nextNumberedCharacterClassAttribute = CTC_UserDefined1;
 	while (characterClassNames[k]) {
 		widechar wname[MAXSTRING];
 		int length = (int)strlen(characterClassNames[k]);
@@ -1462,17 +1513,6 @@ getRuleDotsPattern(FileInfo *nested, CharsString *ruleDots, int *lastToken) {
 }
 
 static int
-getCharacterClass(FileInfo *nested, const CharacterClass **class,
-		const TranslationTableHeader *table, int *lastToken) {
-	CharsString token;
-	if (getToken(nested, &token, "character class name", lastToken)) {
-		if ((*class = findCharacterClass(&token, table))) return 1;
-		compileError(nested, "character class not defined.");
-	}
-	return 0;
-}
-
-static int
 includeFile(FileInfo *nested, CharsString *includedFile, TranslationTableHeader **table,
 		DisplayTableHeader **displayTable);
 
@@ -1629,16 +1669,16 @@ passGetAttributes(CharsString *passLine, int *passLinepos,
 			*passAttributes |= CTC_LowerCase;
 			break;
 		case pass_class1:
-			*passAttributes |= CTC_Class1;
+			*passAttributes |= CTC_UserDefined9;
 			break;
 		case pass_class2:
-			*passAttributes |= CTC_Class2;
+			*passAttributes |= CTC_UserDefined10;
 			break;
 		case pass_class3:
-			*passAttributes |= CTC_Class3;
+			*passAttributes |= CTC_UserDefined11;
 			break;
 		case pass_class4:
-			*passAttributes |= CTC_Class4;
+			*passAttributes |= CTC_UserDefined12;
 			break;
 		default:
 			more = 0;
@@ -1896,7 +1936,9 @@ compilePassOpcode(FileInfo *nested, TranslationTableOpcode opcode,
 				return 0;
 		insertAttributes:
 			passInstructions[passIC++] = pass_attributes;
-			passInstructions[passIC++] = passAttributes >> 16;
+			passInstructions[passIC++] = (passAttributes >> 48) & 0xffff;
+			passInstructions[passIC++] = (passAttributes >> 32) & 0xffff;
+			passInstructions[passIC++] = (passAttributes >> 16) & 0xffff;
 			passInstructions[passIC++] = passAttributes & 0xffff;
 		getRange:
 			if (passLine.chars[passLinepos] == pass_until) {
@@ -2763,10 +2805,10 @@ doOpcode:
 			}
 			if (ptn_before.chars[0] == '-' && ptn_before.length == 1)
 				len = _lou_pattern_compile(
-						&ptn_before.chars[0], 0, &patterns[1], 13841, *table);
+						&ptn_before.chars[0], 0, &patterns[1], 13841, *table, nested);
 			else
 				len = _lou_pattern_compile(&ptn_before.chars[0], ptn_before.length,
-						&patterns[1], 13841, *table);
+						&patterns[1], 13841, *table, nested);
 			if (!len) {
 				ok = 0;
 				break;
@@ -2776,10 +2818,10 @@ doOpcode:
 
 			if (ptn_after.chars[0] == '-' && ptn_after.length == 1)
 				len = _lou_pattern_compile(
-						&ptn_after.chars[0], 0, &patterns[mrk], 13841, *table);
+						&ptn_after.chars[0], 0, &patterns[mrk], 13841, *table, nested);
 			else
 				len = _lou_pattern_compile(&ptn_after.chars[0], ptn_after.length,
-						&patterns[mrk], 13841, *table);
+						&patterns[mrk], 13841, *table, nested);
 			if (!len) {
 				ok = 0;
 				break;
@@ -2827,10 +2869,10 @@ doOpcode:
 			}
 			if (ptn_before.chars[0] == '-' && ptn_before.length == 1)
 				len = _lou_pattern_compile(
-						&ptn_before.chars[0], 0, &patterns[1], 13841, *table);
+						&ptn_before.chars[0], 0, &patterns[1], 13841, *table, nested);
 			else
 				len = _lou_pattern_compile(&ptn_before.chars[0], ptn_before.length,
-						&patterns[1], 13841, *table);
+						&patterns[1], 13841, *table, nested);
 			if (!len) {
 				ok = 0;
 				break;
@@ -2840,10 +2882,10 @@ doOpcode:
 
 			if (ptn_after.chars[0] == '-' && ptn_after.length == 1)
 				len = _lou_pattern_compile(
-						&ptn_after.chars[0], 0, &patterns[mrk], 13841, *table);
+						&ptn_after.chars[0], 0, &patterns[mrk], 13841, *table, nested);
 			else
 				len = _lou_pattern_compile(&ptn_after.chars[0], ptn_after.length,
-						&patterns[mrk], 13841, *table);
+						&patterns[mrk], 13841, *table, nested);
 			if (!len) {
 				ok = 0;
 				break;
@@ -3082,7 +3124,9 @@ doOpcode:
 		case CTO_EndEmph:
 		case CTO_BegEmphPhrase:
 		case CTO_EndEmphPhrase:
-		case CTO_LenEmphPhrase: {
+		case CTO_LenEmphPhrase:
+		case CTO_EmphModeChars:
+		case CTO_NoEmphChars: {
 			ok = 0;
 			TranslationTableOffset ruleOffset = 0;
 			if (getToken(nested, &token, "emphasis class", &lastToken))
@@ -3212,6 +3256,54 @@ doOpcode:
 					else if (opcode == CTO_LenEmphPhrase)
 						ok = (*table)->emphRules[i][lenPhraseOffset] =
 								compileNumber(nested, &lastToken);
+					else if (opcode == CTO_EmphModeChars) {
+						ok = 1;
+						if (getRuleCharsText(nested, &ruleChars, &lastToken)) {
+							widechar *emphmodechars = (*table)->emphModeChars[i - 1];
+							int len;
+							for (len = 0; len < EMPHMODECHARSSIZE && emphmodechars[len];
+									len++)
+								;
+							if (len + ruleChars.length > EMPHMODECHARSSIZE) {
+								compileError(nested, "More than %d characters",
+										EMPHMODECHARSSIZE);
+								ok = 0;
+								break;
+							}
+							for (k = 0; k < ruleChars.length; k++) {
+								if (!getChar(ruleChars.chars[k], *table)) {
+									compileError(
+											nested, "Emphasis mode character undefined");
+									ok = 0;
+									break;
+								}
+								emphmodechars[len++] = ruleChars.chars[k];
+							}
+						}
+					} else if (opcode == CTO_NoEmphChars) {
+						ok = 1;
+						if (getRuleCharsText(nested, &ruleChars, &lastToken)) {
+							widechar *noemphchars = (*table)->noEmphChars[i - 1];
+							int len;
+							for (len = 0; len < NOEMPHCHARSSIZE && noemphchars[len];
+									len++)
+								;
+							if (len + ruleChars.length > NOEMPHCHARSSIZE) {
+								compileError(nested, "More than %d characters",
+										NOEMPHCHARSSIZE);
+								ok = 0;
+								break;
+							}
+							for (k = 0; k < ruleChars.length; k++) {
+								if (!getChar(ruleChars.chars[k], *table)) {
+									compileError(nested, "Character undefined");
+									ok = 0;
+									break;
+								}
+								noemphchars[len++] = ruleChars.chars[k];
+							}
+						}
+					}
 					free(s);
 				}
 			if (ok && newRuleOffset) *newRuleOffset = ruleOffset;
@@ -3272,62 +3364,6 @@ doOpcode:
 			if (ok && newRuleOffset) *newRuleOffset = ruleOffset;
 			break;
 		}
-		case CTO_Attribute:
-
-			c = NULL;
-			ok = 1;
-			if (!getToken(nested, &ruleChars, "attribute number", &lastToken)) {
-				compileError(nested, "Expected attribute number.");
-				ok = 0;
-				break;
-			}
-
-			k = -1;
-			switch (ruleChars.chars[0]) {
-			case '0':
-				k = 0;
-				break;
-			case '1':
-				k = 1;
-				break;
-			case '2':
-				k = 2;
-				break;
-			case '3':
-				k = 3;
-				break;
-			case '4':
-				k = 4;
-				break;
-			case '5':
-				k = 5;
-				break;
-			case '6':
-				k = 6;
-				break;
-			case '7':
-				k = 7;
-				break;
-			}
-			if (k == -1) {
-				compileError(nested, "Invalid attribute number.");
-				ok = 0;
-				break;
-			}
-
-			if (getRuleCharsText(nested, &ruleChars, &lastToken)) {
-				for (i = 0; i < ruleChars.length; i++) {
-					c = getChar(ruleChars.chars[i], *table);
-					if (c)
-						c->attributes |= (CTC_UserDefined0 << k);
-					else {
-						compileError(nested, "Attribute character undefined");
-						ok = 0;
-						break;
-					}
-				}
-			}
-			break;
 
 		case CTO_NumericModeChars:
 
@@ -3494,26 +3530,8 @@ doOpcode:
 						break;
 					}
 				}
+				(*table)->hasCapsModeChars = 1;
 			}
-			break;
-
-		case CTO_EmphModeChars:
-
-			c = NULL;
-			ok = 1;
-			if (getRuleCharsText(nested, &ruleChars, &lastToken)) {
-				for (k = 0; k < ruleChars.length; k++) {
-					c = getChar(ruleChars.chars[k], *table);
-					if (c)
-						c->attributes |= CTC_EmphMode;
-					else {
-						compileError(nested, "Emphasis mode character undefined");
-						ok = 0;
-						break;
-					}
-				}
-			}
-			(*table)->usesEmphMode = 1;
 			break;
 
 		case CTO_BegComp: {
@@ -3763,43 +3781,135 @@ doOpcode:
 			break;
 		}
 
-		case CTO_Class: {
-			CharsString characters;
-			const CharacterClass *class;
-			if (!(*table)->characterClasses) {
-				if (!allocateCharacterClasses(*table)) ok = 0;
+		case CTO_Class:
+			compileWarning(nested, "class is deprecated, use attribute instead");
+		case CTO_Attribute: {
+			if ((opcode == CTO_Class && (*table)->usesAttributeOrClass == 1) ||
+					(opcode == CTO_Attribute && (*table)->usesAttributeOrClass == 2)) {
+				compileError(nested,
+						"attribute and class rules must not be both present in a table");
+				ok = 0;
+				break;
 			}
-			if (getToken(nested, &token, "character class name", &lastToken)) {
-				class = findCharacterClass(&token, *table);
-				if (!class)
-					// no class with that name: create one
-					class = addCharacterClass(
-							nested, &token.chars[0], token.length, *table);
-				if (class) {
-					// there is a class with that name or a new class was successfully
-					// created
-					if (getCharacters(nested, &characters, &lastToken)) {
-						int index;
-						for (index = 0; index < characters.length; ++index) {
-							TranslationTableRule *defRule;
-							// get the character from the table and add the new class to
-							// its attributes if the character is not defined yet, define
-							// it
-							TranslationTableCharacter *character =
-									putChar(nested, characters.chars[index], table);
-							character->attributes |= class->attribute;
-							// also add the attribute to the associated dots (if any)
-							if (character->definitionRule) {
-								defRule = (TranslationTableRule *)&(*table)
-												  ->ruleArea[character->definitionRule];
-								if (defRule->dotslen == 1) {
-									character =
-											getDots(defRule->charsdots[defRule->charslen],
-													*table);
-									if (character)
-										character->attributes |= class->attribute;
+			if (opcode == CTO_Class)
+				(*table)->usesAttributeOrClass = 2;
+			else
+				(*table)->usesAttributeOrClass = 1;
+
+			ok = 1;
+			if (!getToken(nested, &token, "attribute name", &lastToken)) {
+				compileError(nested, "Expected %s", "attribute name");
+				ok = 0;
+				break;
+			}
+
+			if (!(*table)->characterClasses && !allocateCharacterClasses(*table)) {
+				ok = 0;
+				break;
+			}
+
+			TranslationTableCharacterAttributes attribute = 0;
+			{
+				int attrNumber = -1;
+				switch (token.chars[0]) {
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+				case '8':
+				case '9':
+					attrNumber = token.chars[0] - '0';
+					break;
+				}
+				if (attrNumber >= 0) {
+					if (opcode == CTO_Class) {
+						compileError(nested,
+								"Invalid class name: may not contain digits, use "
+								"attribute instead of class");
+						ok = 0;
+						break;
+					} else if (token.length > 1 || attrNumber > 7) {
+						compileError(nested,
+								"Invalid attribute name: must be a digit between 0 and 7 "
+								"or a word containing only letters");
+						ok = 0;
+						break;
+					}
+					if (!(*table)->numberedAttributes[attrNumber])
+						// attribute not used before yet: assign it a value
+						(*table)->numberedAttributes[attrNumber] =
+								getNextNumberedAttribute(*table);
+					attribute = (*table)->numberedAttributes[attrNumber];
+				} else {
+					const CharacterClass *namedAttr = findCharacterClass(&token, *table);
+					if (!namedAttr) {
+						// no class with that name: create one
+						for (i = 0; i < token.length; i++) {
+							if (!((token.chars[i] >= 'a' && token.chars[i] <= 'z') ||
+										(token.chars[i] >= 'A' &&
+												token.chars[i] <= 'Z'))) {
+								// don't abort because in some cases (before/after rules)
+								// this will work fine, but it will not work in multipass
+								// expressions
+								compileWarning(nested,
+										"Invalid attribute name: must be a digit between "
+										"0 and 7 or a word containing only letters");
+							}
+						}
+						// check that name is not reserved
+						k = 0;
+						while (reservedAttributeNames[k]) {
+							if (strlen(reservedAttributeNames[k]) == token.length) {
+								for (i = 0; i < token.length; i++)
+									if (reservedAttributeNames[k][i] != token.chars[i])
+										break;
+								if (i == token.length) {
+									compileError(nested, "Attribute name is reserved: %s",
+											reservedAttributeNames[k]);
+									ok = 0;
+									break;
 								}
 							}
+							k++;
+						}
+						if (!ok) break;
+						// create the class
+						namedAttr = addCharacterClass(
+								nested, &token.chars[0], token.length, *table);
+					}
+					if (namedAttr)
+						// there is a class with that name or a new class was successfully
+						// created
+						attribute = namedAttr->attribute;
+				}
+			}
+			if (!attribute) {
+				compileError(nested, "Too many character attributes defined");
+				ok = 0;
+				break;
+			}
+			CharsString characters;
+			if (getCharacters(nested, &characters, &lastToken)) {
+				for (i = 0; i < characters.length; i++) {
+					// get the character from the table, or if it is not defined yet,
+					// define it
+					TranslationTableCharacter *character =
+							putChar(nested, characters.chars[i], table);
+					// set the attribute
+					character->attributes |= attribute;
+					// also set the attribute on the associated dots (if any)
+					if (character->definitionRule) {
+						TranslationTableRule *defRule =
+								(TranslationTableRule *)&(*table)
+										->ruleArea[character->definitionRule];
+						if (defRule->dotslen == 1) {
+							character = getDots(
+									defRule->charsdots[defRule->charslen], *table);
+							if (character) character->attributes |= attribute;
 						}
 					}
 				}
@@ -3812,16 +3922,19 @@ doOpcode:
 				const CharacterClass *class;
 			case CTO_After:
 				attributes = &after;
-				goto doClass;
+				goto doBeforeAfter;
 			case CTO_Before:
 				attributes = &before;
-			doClass:
+			doBeforeAfter:
 				if (!(*table)->characterClasses) {
 					if (!allocateCharacterClasses(*table)) ok = 0;
 				}
-				if (getCharacterClass(nested, &class, *table, &lastToken)) {
-					*attributes |= class->attribute;
-					goto doOpcode;
+				if (getToken(nested, &token, "attribute name", &lastToken)) {
+					if ((class = findCharacterClass(&token, *table))) {
+						*attributes |= class->attribute;
+						goto doOpcode;
+					}
+					compileError(nested, "attribute not defined");
 				}
 				break;
 			}
@@ -4543,15 +4656,15 @@ _lou_allocMem(AllocBuf buffer, int index, int srcmax, int destmax) {
 	case alloc_wordBuffer:
 
 		if (wordBuffer != NULL) free(wordBuffer);
-		wordBuffer = malloc((srcmax + 4) * sizeof(unsigned int));
-		if (!wordBuffer) _lou_outOfMemory();
+		wordBuffer = calloc(srcmax + 4, sizeof(unsigned int));
+		if (wordBuffer == NULL) _lou_outOfMemory();
 		return wordBuffer;
 
 	case alloc_emphasisBuffer:
 
 		if (emphasisBuffer != NULL) free(emphasisBuffer);
-		emphasisBuffer = malloc((srcmax + 4) * sizeof(EmphasisInfo));
-		if (!emphasisBuffer) _lou_outOfMemory();
+		emphasisBuffer = calloc(srcmax + 4, sizeof(EmphasisInfo));
+		if (emphasisBuffer == NULL) _lou_outOfMemory();
 		return emphasisBuffer;
 
 	case alloc_destSpacing:
