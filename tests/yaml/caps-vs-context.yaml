@@ -1,0 +1,50 @@
+#!tools/lou_checkyaml
+#
+# Tests to ensure that context matches work even in "capsword" mode
+# :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#
+# Copyright © 2023 by Anthony Tibbs
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved. This file is offered as-is,
+# without any warranty.
+# ..............................................................................................
+
+display: tables/unicode.dis
+
+table: |
+  include tables/latinLetterDef6Dots.uti
+  include tables/spaces.uti
+
+  capsletter 6
+  begcapsword 6-6
+  lencapsphrase 3
+  begcapsphrase 6-6-6
+  endcapsphrase after 6-3
+
+  always ar 345
+  
+  noback context _$l["ound"] @46-145a
+  noback context _$l["OUND"] @46-145a
+
+  noback pass2 [@6-46-145a]   @6-1256-1345-145
+  noback pass2 [@6-6-46-145a] @6-6-1256-1345-145
+  noback pass2 [@6-3-46-145a] @6-3-1256-1345-145
+  noback pass2 @46-145a       @46-145
+
+tests:
+  - - "around"
+    - "⠜⠨⠙"
+  - - "Around"
+    - "⠠⠜⠨⠙"
+  - - "arOund"
+    - "⠜⠠⠕⠥⠝⠙"
+
+  - - "AROUND"
+    - "⠠⠠⠜⠨⠙"
+  - - "MOVE AROUND"
+    - "⠠⠠⠍⠕⠧⠑⠀⠠⠠⠜⠨⠙"
+  - - "GO MOVE AROUND"
+    - "⠠⠠⠠⠛⠕⠀⠍⠕⠧⠑⠀⠜⠨⠙⠠⠄"
+
