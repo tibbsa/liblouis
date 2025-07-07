@@ -96,11 +96,11 @@ static int logLevelFromEnvironmentSet = 0;
 
 /*
  * Returns boolean flag (0/1), where 1 indicates that the log level that
- * has been set in logLevel is set from the environment variable (i.e. and 
+ * has been set in logLevel is set from the environment variable (i.e. and
  * should not be overriden by a setLogLevel call).
  */
-int _lou_setLogLevelFromEnvironment()
-{
+int
+_lou_setLogLevelFromEnvironment() {
 	/* Do not check again if we have already set this up */
 	if (logLevelFromEnvironmentChecked == 1) {
 		return logLevelFromEnvironmentSet;
@@ -114,24 +114,39 @@ int _lou_setLogLevelFromEnvironment()
 		logLevelFromEnvironmentSet = 0;
 	} else {
 		/* Log levels names are unique by their first character */
-		switch (tolower(log_level_str[0]))
-		{
-			case 'a': logLevel = LOU_LOG_ALL; break;
-			case 'd': logLevel = LOU_LOG_DEBUG; break;
-			case 'i': logLevel = LOU_LOG_INFO; break;
-			case 'w': logLevel = LOU_LOG_WARN; break;
-			case 'e': logLevel = LOU_LOG_ERROR; break;
-			case 'f': logLevel = LOU_LOG_FATAL; break;
-			case 'o': logLevel = LOU_LOG_OFF; break;
-			default:
-				logLevel = LOU_LOG_INFO; 
-				_lou_logMessage(LOU_LOG_WARN, "Unknown log level set by LOUIS_LOGLEVEL environment variable: %s", log_level_str);
-				break;
+		switch (tolower(log_level_str[0])) {
+		case 'a':
+			logLevel = LOU_LOG_ALL;
+			break;
+		case 'd':
+			logLevel = LOU_LOG_DEBUG;
+			break;
+		case 'i':
+			logLevel = LOU_LOG_INFO;
+			break;
+		case 'w':
+			logLevel = LOU_LOG_WARN;
+			break;
+		case 'e':
+			logLevel = LOU_LOG_ERROR;
+			break;
+		case 'f':
+			logLevel = LOU_LOG_FATAL;
+			break;
+		case 'o':
+			logLevel = LOU_LOG_OFF;
+			break;
+		default:
+			logLevel = LOU_LOG_INFO;
+			_lou_logMessage(LOU_LOG_WARN,
+					"Unknown log level set by LOUIS_LOGLEVEL environment variable: %s",
+					log_level_str);
+			break;
 		}
 
 		logLevelFromEnvironmentSet = 1;
 	}
-	
+
 	return logLevelFromEnvironmentSet;
 }
 
