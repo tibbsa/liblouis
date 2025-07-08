@@ -144,6 +144,13 @@ static const TranslationTableRule **appliedRules;
 static int maxAppliedRules;
 static int appliedRulesCount;
 
+static int
+isValidOffset(const TranslationTableHeader *table, TranslationTableOffset offset) {
+	if (!offset) return 0;
+	if (offset >= (table->bytesUsed - sizeof(*table)) / OFFSETSIZE) return 0;
+	return 1;
+}
+
 static TranslationTableCharacter *
 getChar(widechar c, const TranslationTableHeader *table) {
 	static TranslationTableCharacter notFound = { NULL, -1, 0, 0, 0, CTC_Space, 0, 0, 32,
@@ -151,6 +158,10 @@ getChar(widechar c, const TranslationTableHeader *table) {
 	const TranslationTableOffset bucket = table->characters[_lou_charHash(c)];
 	TranslationTableOffset offset = bucket;
 	while (offset) {
+		if (!isValidOffset(table, offset)) {
+			_lou_logMessage(LOU_LOG_ERROR, "Invalid offset %u in getChar", offset);
+			break;
+		}
 		TranslationTableCharacter *character =
 				(TranslationTableCharacter *)&table->ruleArea[offset];
 		if (character->value == c) return character;
@@ -167,6 +178,10 @@ getDots(widechar c, const TranslationTableHeader *table) {
 	const TranslationTableOffset bucket = table->dots[_lou_charHash(c)];
 	TranslationTableOffset offset = bucket;
 	while (offset) {
+		if (!isValidOffset(table, offset)) {
+			_lou_logMessage(LOU_LOG_ERROR, "Invalid offset %u in getDots", offset);
+			break;
+		}
 		TranslationTableCharacter *character =
 				(TranslationTableCharacter *)&table->ruleArea[offset];
 		if (character->value == c) return character;
@@ -226,12 +241,24 @@ toLowercase(
 		const TranslationTableHeader *table, const TranslationTableCharacter *character) {
 	if (character->mode & CTC_UpperCase) {
 		const TranslationTableCharacter *c = character;
-		if (c->basechar) c = (TranslationTableCharacter *)&table->ruleArea[c->basechar];
+		if (c->basechar) {
+			if (!isValidOffset(table, c->basechar)) {
+				_lou_logMessage(LOU_LOG_ERROR, "toLowercase: Invalid basechar offset %u",
+						c->basechar);
+				return character->value;
+			}
+			c = (TranslationTableCharacter *)&table->ruleArea[c->basechar];
+		}
 		while (1) {
 			if ((c->mode & (character->mode & ~CTC_UpperCase)) ==
 					(character->mode & ~CTC_UpperCase))
 				return c->value;
 			if (!c->linked) break;
+			if (!isValidOffset(table, c->linked)) {
+				_lou_logMessage(LOU_LOG_ERROR, "Invalid linked offset %u in toLowercase",
+						c->linked);
+				break;
+			}
 			c = (TranslationTableCharacter *)&table->ruleArea[c->linked];
 		}
 	}
@@ -1853,8 +1880,7 @@ isRepeatedWord(const TranslationTableHeader *table, int pos, const InString *inp
 	for (len = 1; pos - len >= 0 && pos + transCharslen + len - 1 < input->length &&
 			checkCharAttr(input->chars[pos - len], CTC_Letter, table) &&
 			checkCharAttr(input->chars[pos + transCharslen + len - 1], CTC_Letter, table);
-			len++)
-		;
+			len++);
 	len--;
 	/* now actually compare the parts, starting with the maximal length and making them
 	 * shorter if they don't match */
@@ -3870,8 +3896,7 @@ translateString(const TranslationTableHeader *table, int mode, int currentPass,
 			int dotslen = transRule->dotslen;
 			if (transOpcode == CTO_RepEndWord) {
 				int k;
-				for (k = 1; dots[k] != ','; k++)
-					;
+				for (k = 1; dots[k] != ','; k++);
 				k++;
 				dots = &dots[k];
 				dotslen -= k;
@@ -3925,8 +3950,7 @@ translateString(const TranslationTableHeader *table, int mode, int currentPass,
 			 */
 			const widechar *dots = &transRule->charsdots[transCharslen];
 			int dotslen;
-			for (dotslen = 1; dots[dotslen] != ','; dotslen++)
-				;
+			for (dotslen = 1; dots[dotslen] != ','; dotslen++);
 			if ((output->length + dotslen) > output->maxlength) goto failure;
 			int k;
 			for (k = output->length - 1; k >= 0; k--)
