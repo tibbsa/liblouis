@@ -1,0 +1,56 @@
+# Test capitalization with capsmodechars (issue #706)
+# When capsmodechars is defined, single-letter symbols should not trigger
+# passage mode unless the passage also contains multi-letter words.
+display: |
+  display \s 0
+  display a 1
+  display b 2
+  display c 3
+  display x 4
+  display y 5
+  display z 6
+  display + 12
+  display [ 13
+  display ] 14
+  display < 15
+  display > 16
+  display - 23
+
+table: |
+  include tables/spaces.uti
+  lowercase a 1
+  lowercase b 2
+  lowercase c 3
+  lowercase x 4
+  lowercase y 5
+  lowercase z 6
+  base uppercase A a
+  base uppercase B b
+  base uppercase C c
+  base uppercase X x
+  base uppercase Y y
+  base uppercase Z z
+  sign - 23
+  sign + 12
+  sign [ 13
+  sign ] 14
+  sign < 15
+  sign > 16
+  capsletter 12
+  begcapsword 13
+  endcapsword 14
+  lencapsphrase 3
+  begcapsphrase 15
+  endcapsphrase before 16
+  capsmodechars -
+
+flags: {testmode: forward}
+tests:
+  # Single-letter words should not form a passage
+  - [A B C, '+a +b +c']
+  - ['A B C ', '+a +b +c ']
+  # Multi-letter words still form passages
+  - [ABC XYZ ABC, '<abc xyz >abc']
+  # Mixed: single-letter words are counted when multi-letter words are present
+  - [A ABC XYZ ABC, '<a abc xyz >abc']
+  - [ABC A XYZ, '<abc a >xyz']

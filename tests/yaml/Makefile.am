@@ -4,6 +4,7 @@ EXTRA_DIST =					\
 	before_begmidword.yaml			\
 	begcaps_endcaps.yaml			\
 	capitalization.yaml			\
+	capitalization_capsmodechars.yaml	\
 	capsnocont.yaml				\
 	capsword.yaml				\
 	case-sensitivity.yaml			\

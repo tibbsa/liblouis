@@ -2928,6 +2928,10 @@ resolveEmphasisPassages(EmphasisInfo *buffer, const EmphasisClass *class,
 	int in_emph_word = 0, last_emph_symbol = -1;
 	int in_pass = 0, last_pass_word_start = -1, last_pass_word_end = -1, pass_start = -1;
 	unsigned int pass_word_cnt = 0;
+	/* When capsmodechars is defined, single-letter symbols are only counted toward the
+	 * passage word count if the passage also contains a multi-letter word (issue #706) */
+	int caps_has_multi_letter = 0;
+	unsigned int caps_skipped_singles = 0;
 	int endphraseafter_defined = emphRule[endPhraseAfterOffset] || emphRule[endOffset];
 
 	for (int i = 0; i < input->length; i++) {
@@ -2960,7 +2964,22 @@ resolveEmphasisPassages(EmphasisInfo *buffer, const EmphasisClass *class,
 				 * if the next word with letters is a whole word) */
 				if (!class->mode || (wordBuffer[i] & WORD_WHOLE)) {
 					last_pass_word_start = i;
-					pass_word_cnt++;
+					if (table->hasCapsModeChars && class->mode == CTC_UpperCase &&
+							(buffer[i].symbol & class->value) && !caps_has_multi_letter) {
+						/* single-letter symbol with no multi-letter word seen yet:
+						 * defer counting (issue #706) */
+						caps_skipped_singles++;
+					} else {
+						if (table->hasCapsModeChars && class->mode == CTC_UpperCase &&
+								!caps_has_multi_letter) {
+							/* first multi-letter word: retroactively count deferred
+							 * single-letter symbols */
+							pass_word_cnt += caps_skipped_singles;
+							caps_skipped_singles = 0;
+							caps_has_multi_letter = 1;
+						}
+						pass_word_cnt++;
+					}
 				} else
 					goto end_passage;
 			}
@@ -2985,7 +3004,18 @@ resolveEmphasisPassages(EmphasisInfo *buffer, const EmphasisClass *class,
 				pass_start = i;
 				last_pass_word_start = i;
 				last_pass_word_end = -1;
-				pass_word_cnt = 1;
+				if (table->hasCapsModeChars && class->mode == CTC_UpperCase &&
+						(buffer[i].symbol & class->value)) {
+					pass_word_cnt = 0;
+					caps_skipped_singles = 1;
+					caps_has_multi_letter = 0;
+				} else {
+					pass_word_cnt = 1;
+					caps_skipped_singles = 0;
+					caps_has_multi_letter =
+							(table->hasCapsModeChars && class->mode == CTC_UpperCase) ? 1
+																					  : 0;
+				}
 			}
 		} else { /* check if at end of passage */
 			if (in_pass) {

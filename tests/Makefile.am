@@ -223,6 +223,7 @@ dist_yaml_TESTS =				\
 	yaml/before_begmidword.yaml		\
 	yaml/broken_equals_operand.yaml		\
 	yaml/capitalization.yaml		\
+	yaml/capitalization_capsmodechars.yaml	\
 	yaml/capsnocont.yaml			\
 	yaml/capsword.yaml			\
 	yaml/case-sensitivity.yaml		\
