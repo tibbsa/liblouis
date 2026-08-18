@@ -45,53 +45,82 @@ include latinUppercaseComp6.uti
 sign \x00b4 45-34 ´
 sign \x0301 45-34 ́ 
 noback correct [$l]"́" "́"*
+noback pass2 @45-34-6-6-6 @6-6-6-45-34  move after capitals passage indicator
+noback pass2 @45-34-6-6 @6-6-45-34  move after capitals word indicator
+noback pass2 @45-34-6 @6-45-34  move after capitals letter indicator
 
 # circumflex/carot
 sign \x005e 4-26 ^
 sign \x0302 45-146 ̂ 
 noback correct [$l]"̂" "̂"*
+noback pass2 @45-146-6-6-6 @6-6-6-45-146  move after capitals passage indicator
+noback pass2 @45-146-6-6 @6-6-45-146  move after capitals word indicator
+noback pass2 @45-146-6 @6-45-146  move after capitals letter indicator
 
 # grave accent
 sign \x0060 46-16 `
 noback punctuation ` 4
 sign \x0300 45-16 ̀̀ 
 noback correct [$l]"̀" "̀"*
+noback pass2 @45-16-6-6-6 @6-6-6-45-16  move after capitals passage indicator
+noback pass2 @45-16-6-6 @6-6-45-16  move after capitals word indicator
+noback pass2 @45-16-6 @6-45-16  move after capitals letter indicator
 
 # tilde
 math \x007e 4-35 ~
 sign \x0303 45-12456 ̃ 
 noback correct [$l]"̃" "̃"*
-noback pass2 @45-12456-6 @6-45-12456  move after capital sign
+noback pass2 @45-12456-6-6-6 @6-6-6-45-12456  move after capitals passage indicator
+noback pass2 @45-12456-6-6 @6-6-45-12456  move after capitals word indicator
+noback pass2 @45-12456-6 @6-45-12456  move after capitals letter indicator
 
 # macron
 sign \x00af 4-36 ¯
 sign \x0304 4-36 ̄
 noback correct [$l]"̄" "̄"*
+noback pass2 @4-36-6-6-6 @6-6-6-4-36  move after capitals passage indicator
+noback pass2 @4-36-6-6 @6-6-4-36  move after capitals word indicator
+noback pass2 @4-36-6 @6-4-36  move after capitals letter indicator
 
 # cedilla
 sign \x00b8 45-12346 ¸
 sign \x0327 45-12346 ̧ 
 noback correct [$l]"̧" "̧"*
+noback pass2 @45-12346-6-6-6 @6-6-6-45-12346  move after capitals passage indicator
+noback pass2 @45-12346-6-6 @6-6-45-12346  move after capitals word indicator
+noback pass2 @45-12346-6 @6-45-12346  move after capitals letter indicator
 
 # diaeresis/umlat
 sign \x00a8 45-25 ¨
 sign \x0308 45-25 ̈  
 noback correct [$l]"̈" "̈"*
+noback pass2 @45-25-6-6-6 @6-6-6-45-25  move after capitals passage indicator
+noback pass2 @45-25-6-6 @6-6-45-25  move after capitals word indicator
+noback pass2 @45-25-6 @6-45-25  move after capitals letter indicator
 
 # caron
 sign \x02c7 45-345 ˇ
 sign \x030c 45-346 ̌ 
 noback correct [$l]"̌" "̌"*
+noback pass2 @45-346-6-6-6 @6-6-6-45-346  move after capitals passage indicator
+noback pass2 @45-346-6-6 @6-6-45-346  move after capitals word indicator
+noback pass2 @45-346-6 @6-45-346  move after capitals letter indicator
 
 # breve
 sign \x02d8 4-346 ˘
 sign \x0306 4-346 ̆ 
 noback correct [$l]"̆" "̆"*
+noback pass2 @4-346-6-6-6 @6-6-6-4-346  move after capitals passage indicator
+noback pass2 @4-346-6-6 @6-6-4-346  move after capitals word indicator
+noback pass2 @4-346-6 @6-4-346  move after capitals letter indicator
 
 # ring/circle
 sign \x02da 45-1246 ˚
 sign \x030a 45-1246 ̊  
 noback correct [$l]"̊" "̊"*
+noback pass2 @45-1246-6-6-6 @6-6-6-45-1246  move after capitals passage indicator
+noback pass2 @45-1246-6-6 @6-6-45-1246  move after capitals word indicator
+noback pass2 @45-1246-6 @6-45-1246  move after capitals letter indicator
 
 
 #####   Start of Unicode
