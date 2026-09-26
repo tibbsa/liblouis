@@ -1,0 +1,51 @@
+# Test that indicators of custom modes (modeletter, begmodeword, endmodeword,
+# begmode, endmode, begmodephrase, endmodephrase) are recognized during
+# back-translation, rather than being emitted as undefined dots.
+#
+# The back-translator does not (yet) use the mode to select characters, so
+# the indicators are simply dropped. See
+# https://github.com/liblouis/liblouis/issues/2106
+
+display: tables/unicode-without-blank.dis
+
+# Example from the issue: begmode on its own
+table: |
+  include tables/spaces.uti
+  lowercase a 1
+  lowercase а 1
+  attribute cyrillic а
+  begmode cyrillic 456
+flags: {testmode: backward}
+tests:
+  - [⠁, a]
+  - [⠸⠁, a]
+
+# All mode indicator opcodes, each with a distinct dot pattern
+table: |
+  include tables/spaces.uti
+  lowercase a 1
+  lowercase b 12
+  lowercase а 1
+  lowercase б 12
+  attribute cyrillic аб
+  modeletter cyrillic 4
+  begmodeword cyrillic 45
+  endmodeword cyrillic 456
+  begmode cyrillic 46
+  endmode cyrillic 5
+  begmodephrase cyrillic 56-56
+  endmodephrase cyrillic after 6-6
+flags: {testmode: backward}
+tests:
+  - - modeletter
+    - ⠈⠁⠃
+    - ab
+  - - begmodeword and endmodeword
+    - ⠘⠁⠃⠸⠁
+    - aba
+  - - begmode and endmode
+    - ⠨⠁⠃⠐⠁
+    - aba
+  - - begmodephrase and endmodephrase
+    - ⠰⠰⠁⠀⠃⠠⠠⠀⠁
+    - a b a

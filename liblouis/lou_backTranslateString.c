@@ -774,6 +774,13 @@ back_selectRule(const TranslationTableHeader *table, int pos, int mode,
 					case CTO_NumberSign:
 					case CTO_BegComp:
 					case CTO_EndComp:
+					case CTO_ModeLetter:
+					case CTO_BegModeWord:
+					case CTO_EndModeWord:
+					case CTO_BegMode:
+					case CTO_EndMode:
+					case CTO_BegModePhrase:
+					case CTO_EndModePhrase:
 						return;
 					case CTO_EmphLetter:
 					case CTO_BegEmphWord:
@@ -1298,6 +1305,19 @@ backTranslateString(const TranslationTableHeader *table, int mode, int currentPa
 			continue;
 			break;
 		case CTO_EndComp:
+			while (currentDotslen-- > 0) posMapping[pos++] = output->length;
+			continue;
+			break;
+		case CTO_ModeLetter:
+		case CTO_BegModeWord:
+		case CTO_EndModeWord:
+		case CTO_BegMode:
+		case CTO_EndMode:
+		case CTO_BegModePhrase:
+		case CTO_EndModePhrase:
+			/* Mode indicators other than caps are recognized but otherwise ignored:
+			 * the back-translator does not (yet) select characters based on the
+			 * active mode. */
 			while (currentDotslen-- > 0) posMapping[pos++] = output->length;
 			continue;
 			break;
