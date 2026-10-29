@@ -67,6 +67,9 @@ extern "C" {
 #define CHARSIZE sizeof(widechar)
 #define DEFAULTRULESIZE 50
 
+/* Enable source file and line information in TranslationTableRule for debugging. */
+#define ENABLE_RULE_DEBUG_INFO 0
+
 typedef struct intCharTupple {
 	unsigned long long key;
 	char value;
@@ -363,8 +366,10 @@ typedef enum { /* Op codes */
 typedef struct {
 	TranslationTableCharacterAttributes after;	/** character types which must follow */
 	TranslationTableCharacterAttributes before; /** character types which must precede */
+#if ENABLE_RULE_DEBUG_INFO
 	const char *sourceFile;
 	int sourceLine;
+#endif
 	int index;						  /** sequence number of rule within table */
 	TranslationTableOffset charsnext; /** next chars entry */
 	TranslationTableOffset dotsnext;  /** next dots entry */
