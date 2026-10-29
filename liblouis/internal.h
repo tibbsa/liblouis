@@ -379,7 +379,8 @@ typedef struct {
 	short dotslen;					  /** length of replacement string */
 	TranslationTableOpcode opcode;	  /** Rule opcode (stored as an unsigned char). */
 	char nocross;
-	widechar charsdots[DEFAULTRULESIZE]; /** find and replacement strings */
+	widechar charsdots[]; /** find and replacement strings, allocated according to the
+							 rule size */
 } TranslationTableRule;
 
 typedef struct /* state transition */

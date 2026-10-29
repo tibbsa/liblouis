@@ -1008,7 +1008,7 @@ addRule(const FileInfo *file, TranslationTableOpcode opcode, const CharsString *
 	/* Add a rule to the table, using the hash function to find the start of
 	 * chains and chaining both the chars and dots strings */
 	TranslationTableOffset offset;
-	int ruleSize = sizeof(TranslationTableRule) - (DEFAULTRULESIZE * CHARSIZE);
+	int ruleSize = sizeof(TranslationTableRule);
 	if (ruleChars) ruleSize += CHARSIZE * ruleChars->length;
 	if (ruleDots) ruleSize += CHARSIZE * ruleDots->length;
 	if (!allocateSpaceInTranslationTable(file, &offset, ruleSize, table)) return 0;
