@@ -361,18 +361,18 @@ typedef enum { /* Op codes */
 } TranslationTableOpcode;
 
 typedef struct {
+	TranslationTableCharacterAttributes after;	/** character types which must follow */
+	TranslationTableCharacterAttributes before; /** character types which must precede */
 	const char *sourceFile;
 	int sourceLine;
-	int index;								   /** sequence number of rule within table */
-	TranslationTableOffset charsnext;		   /** next chars entry */
-	TranslationTableOffset dotsnext;		   /** next dots entry */
-	TranslationTableCharacterAttributes after; /** character types which must follow */
-	TranslationTableCharacterAttributes before; /** character types which must precede */
-	TranslationTableOffset patterns;			/** before and after patterns */
-	TranslationTableOpcode opcode; /** rule for testing validity of replacement */
+	int index;						  /** sequence number of rule within table */
+	TranslationTableOffset charsnext; /** next chars entry */
+	TranslationTableOffset dotsnext;  /** next dots entry */
+	TranslationTableOffset patterns;  /** before and after patterns */
+	short charslen;					  /** length of string to be replaced */
+	short dotslen;					  /** length of replacement string */
+	TranslationTableOpcode opcode;	  /** rule for testing validity of replacement */
 	char nocross;
-	short charslen;						 /** length of string to be replaced */
-	short dotslen;						 /** length of replacement string */
 	widechar charsdots[DEFAULTRULESIZE]; /** find and replacement strings */
 } TranslationTableRule;
 
