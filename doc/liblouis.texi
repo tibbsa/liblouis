@@ -784,9 +784,9 @@ The dot pattern which indicates that a mode is entered for a sequence
 of several whole words, a so-called phrase (or passage). It is placed
 before the first word of the phrase. The phrase is terminated by an
 @code{endmodephrase} indicator placed before or after the last word
-of the phrase. If an @code{endmode} indicator (@pxopref{endmode}) is
-defined, it is used to terminate the phrase instead, after the last
-word, and any @code{endmodephrase} indicator is ignored.
+of the phrase. If no @code{endmodephrase} indicator is defined, the
+@code{endmode} indicator (@pxopref{endmode}) is used instead, after
+the last word.
 
 A phrase indicator is only used when a @code{begmodeword} indicator
 (@pxopref{begmodeword}) and a minimum phrase length
@@ -838,7 +838,8 @@ required before the sequence is indicated as a phrase with
 @code{begmodephrase} and @code{endmodephrase}. Shorter sequences are
 indicated with @code{begmodeword} on each word. Unlike for emphasis
 classes, there is no default value: if @code{lenmodephrase} is not
-defined, the phrase indicators are never used.
+defined, the phrase indicators are never used, and a warning is
+issued when the table is compiled.
 
 Example:
 
