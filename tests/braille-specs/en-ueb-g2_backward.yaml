@@ -271,3 +271,35 @@ tests:
     - expected_typeform:
         italic: '++++'
         bold: '++++'
+
+# Issue #2155: begword and midword contractions must not fire across punctuation
+# inside a token. Letters have to follow immediately; otherwise "midword cc 25"
+# fires on the colon of https://example.com and "con" on ":)abc".
+flags: {testmode: bothDirections}
+tests:
+  - ['https://example.com/cat', ⠓⠞⠞⠏⠎⠒⠸⠌⠸⠌⠑⠭⠁⠍⠏⠇⠑⠲⠉⠕⠍⠸⠌⠉⠁⠞]
+  - ['https://example.com/about/the-world', ⠓⠞⠞⠏⠎⠒⠸⠌⠸⠌⠑⠭⠁⠍⠏⠇⠑⠲⠉⠕⠍⠸⠌⠁⠃⠳⠞⠸⠌⠮⠤⠸⠺]
+  - ['file:///tmp/x', ⠋⠊⠇⠑⠒⠸⠌⠸⠌⠸⠌⠞⠍⠏⠸⠌⠭]
+  - ['rdp://host', ⠗⠙⠏⠒⠸⠌⠸⠌⠓⠕⠌]
+  - ['host.example.org:8080/path', ⠓⠕⠌⠲⠑⠭⠁⠍⠏⠇⠑⠲⠕⠗⠛⠒⠼⠓⠚⠓⠚⠸⠌⠏⠁⠞⠓]
+  - ['ftp://user:pass@host.example.org:8080/path/to/file.txt', ⠋⠞⠏⠒⠸⠌⠸⠌⠥⠎⠻⠰⠒⠏⠁⠎⠎⠈⠁⠓⠕⠌⠲⠑⠭⠁⠍⠏⠇⠑⠲⠕⠗⠛⠒⠼⠓⠚⠓⠚⠸⠌⠏⠁⠞⠓⠸⠌⠞⠕⠸⠌⠋⠊⠇⠑⠲⠞⠭⠞]
+  - ['https://example.com/cat?name=Pinky&breed=Short%20Haired%20Tabby', ⠓⠞⠞⠏⠎⠒⠸⠌⠸⠌⠑⠭⠁⠍⠏⠇⠑⠲⠉⠕⠍⠸⠌⠉⠁⠞⠰⠦⠐⠝⠐⠶⠠⠏⠔⠅⠽⠈⠯⠃⠗⠑⠫⠐⠶⠠⠩⠕⠗⠞⠨⠴⠼⠃⠚⠠⠓⠁⠊⠗⠑⠙⠨⠴⠼⠃⠚⠠⠞⠁⠃⠃⠽]
+  - ['see https://liblouis.io/for/more-info.html for more', '⠎⠑⠑ ⠓⠞⠞⠏⠎⠒⠸⠌⠸⠌⠇⠊⠃⠇⠳⠊⠎⠲⠊⠕⠸⠌⠿⠸⠌⠍⠕⠗⠑⠤⠔⠋⠕⠲⠓⠞⠍⠇ ⠿ ⠍']
+  - [':)abc', ⠒⠐⠜⠁⠃⠉]
+  - ['braille_it_better@learn.org', ⠃⠗⠁⠊⠇⠇⠑⠨⠤⠊⠞⠨⠤⠃⠑⠞⠞⠻⠈⠁⠇⠑⠜⠝⠲⠕⠗⠛]
+  - ['children-do-great@teach.net', ⠡⠝⠤⠙⠤⠛⠗⠂⠞⠈⠁⠞⠂⠡⠲⠝⠑⠞]
+  - ['world@large.com', ⠸⠺⠈⠁⠇⠜⠛⠑⠲⠉⠕⠍]
+  - ['www.rubberchicken.com/menus', ⠺⠺⠺⠲⠗⠥⠆⠻⠡⠊⠉⠅⠢⠲⠉⠕⠍⠸⠌⠍⠢⠥⠎]
+  - ['www.one.in.a.hundred.org', ⠺⠺⠺⠲⠐⠕⠲⠔⠲⠁⠲⠓⠥⠝⠙⠗⠫⠲⠕⠗⠛]
+  - ['http://www.99chances.com', ⠓⠞⠞⠏⠒⠸⠌⠸⠌⠺⠺⠺⠲⠼⠊⠊⠰⠡⠨⠑⠎⠲⠉⠕⠍]
+  - ['c:\\brailledocuments\\letters.txt', ⠉⠒⠸⠡⠃⠗⠁⠊⠇⠇⠫⠕⠉⠥⠰⠞⠎⠸⠡⠇⠑⠞⠞⠻⠎⠲⠞⠭⠞]
+  - ['c:\\contractions\\wordsigns.doc', ⠉⠒⠸⠡⠉⠕⠝⠞⠗⠁⠉⠰⠝⠎⠸⠡⠘⠺⠎⠊⠛⠝⠎⠲⠙⠕⠉]
+  - ['c:\\InfoForSteven\\PhoneNumbers.xls', ⠉⠒⠸⠡⠠⠔⠋⠕⠠⠿⠠⠌⠑⠧⠢⠸⠡⠠⠏⠓⠐⠕⠠⠝⠥⠍⠃⠻⠎⠲⠭⠇⠎]
+  - ['c:\\ideas\\child-of-the-sea.doc', ⠉⠒⠸⠡⠊⠙⠂⠎⠸⠡⠡⠊⠇⠙⠤⠷⠤⠮⠤⠎⠑⠁⠲⠙⠕⠉]
+  - ['c:\\2010DIARY\\March.txt', ⠉⠒⠸⠡⠼⠃⠚⠁⠚⠠⠠⠙⠊⠁⠗⠽⠸⠡⠠⠍⠁⠗⠉⠓⠲⠞⠭⠞]
+
+# Examples from the Rules of Unified English Braille 2024, section 10.12.3,
+# whose forward translation differs from the rulebook.
+flags: {testmode: backward}
+tests:
+  - [⠉⠒⠸⠡⠃⠗⠁⠊⠇⠇⠑⠙⠕⠉⠥⠰⠞⠎⠸⠡⠇⠑⠞⠞⠻⠎⠲⠞⠭⠞, 'c:\\brailledocuments\\letters.txt']
