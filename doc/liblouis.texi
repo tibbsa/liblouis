@@ -2083,13 +2083,34 @@ Normally, when a rule is applied, the characters in the input that the
 rule applies to are "consumed", i.e. the position of the input string
 is stepped forward, and the characters are no longer available for
 subsequent rules.  However, with the multipass opcodes, the
-@opcoderef{context} opcode and the @opcoderef{correct} opcode, it is
-possible to make rules which don't consume any characters from the
-input. This could happen, e.g. if you use the @opcoderef{context}
-opcode to insert a dot pattern before a special group of characters.
-In these cases, Liblouis will always advance the position by one
-character to make sure that the program doesn't apply a rule to the
-same characters again and again.
+@opcoderef{context} and the @opcoderef{correct}, it is possible to
+make rules which don't consume any characters from the input. This is
+the case when the replacement brackets are empty and come first in the
+test part, e.g. if you use the @code{context} opcode to insert a dot
+pattern before a special group of characters.
+Such a rule leaves the position of the input string where it was. To
+make sure that the program doesn't apply a rule to the same characters
+again and again, Liblouis restricts which rules may be applied at that
+position next:
+
+@itemize @bullet
+@item
+In the @code{correct} pass and in passes 2, 3 and 4, no rule at
+all is tried for the character at that position, not even a rule that
+would otherwise match. The character is copied to the output
+unchanged, the position is advanced by one character, and from there
+on rules are tried again as usual.
+
+@item
+In the main translation pass of forward translation, no further
+@code{context} rule is tried at that position, but the ordinary
+translation rules (character definitions, @code{always}, @code{word},
+etc.) are. The position is then advanced by the
+length of whichever rule is selected, which may be more than one
+character. For example, if a @code{context} rule inserts a dot pattern
+before a group of characters and an @code{always} rule exists for that
+group, the whole group is translated by the @code{always} rule.
+@end itemize
 
 @node The correct Opcode
 @section The correct Opcode
