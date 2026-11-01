@@ -1424,8 +1424,26 @@ for each position being used. If there is more than one eligible entry
 for a given position in the text, then the one with the longest
 character string is used. If there is more than one eligible entry for
 the same character string, then the one defined first is tested for
-legality first. (This is the only case in which the order of the
-entries makes a difference.)
+legality first, except that an @code{always} entry for a string of two
+or more characters is tested after the other entries for that string
+regardless of where it is defined. (This is the only case in which the
+order of the entries makes a difference.) For example, with
+
+@example
+always abc 123
+word abc 1
+@end example
+
+the word @samp{abc} is translated as dots @samp{1} whichever of the
+two entries comes first in the table, whereas with
+
+@example
+always a 4
+word a 1
+@end example
+
+the word @samp{a} is translated as dots @samp{4} because the
+@code{always} entry comes first.
 
 The characters operand is a sequence or string of characters preceded
 and followed by whitespace. Each character can be entered in the
