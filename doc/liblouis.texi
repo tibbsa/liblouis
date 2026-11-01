@@ -2067,7 +2067,15 @@ position before the cursor, it is not a match.
 If there is no match: shift the cursor one position to the right and
 continue the loop
 @item
-If there are matches: choose the longest match
+If there are matches: choose the first match in the following order.
+Rules whose test starts with a string or dot-pattern suboperand come
+first, longer suboperands before shorter ones, and rules whose test
+starts with an attribute test come last. Rules that are equal in this
+respect are tried in the order in which they are defined in the
+table. Suboperands that don't consume any input, such as replacement
+brackets, variable tests and look-backs, are skipped when determining
+what a test starts with. Note that the chosen match is not necessarily
+the longest match.
 @item
 Do the replacement. If the expression has square brackets, the part of
 the input that matches the part in between the brackets is replaced
@@ -2078,6 +2086,20 @@ Place the cursor after the replaced text
 @item
 continue loop
 @end enumerate
+
+In the first pass, @code{context} rules compete with the ordinary
+translation rules (@pxref{Translation Opcodes}). A @code{context} rule
+whose test starts with a string suboperand (again skipping suboperands
+that don't consume any input) is treated like a translation rule with
+that string as its characters operand: the rule with the longest
+characters operand wins, and among rules for the same string the one
+defined first is tried first, except that an @code{always} rule for a
+string of two or more characters is tried after the other rules for
+that string. A @code{context} rule whose test starts with an attribute
+test is only considered after the ordinary rules, but if its test
+passes it takes precedence over the ordinary rule that was selected.
+Such a rule is not considered at all when a @code{context} rule of the
+first kind has been selected.
 
 Normally, when a rule is applied, the characters in the input that the
 rule applies to are "consumed", i.e. the position of the input string
