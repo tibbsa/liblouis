@@ -116,6 +116,25 @@ hasAttr(widechar c, TranslationTableCharacterAttributes attributes,
 	return (findChar(c, table)->attributes & attributes) != 0;
 }
 
+/* The lowercase counterpart of c according to the table (same as toLowercase in
+ * the translation engines), or c itself if it has none. */
+static widechar
+lowercaseOf(widechar value, const TranslationTableHeader *table) {
+	const TranslationTableCharacter *character = findChar(value, table);
+	if (character->mode & CTC_UpperCase) {
+		const TranslationTableCharacter *c = character;
+		if (c->basechar) c = (TranslationTableCharacter *)&table->ruleArea[c->basechar];
+		while (1) {
+			if ((c->mode & (character->mode & ~CTC_UpperCase)) ==
+					(character->mode & ~CTC_UpperCase))
+				return c->value;
+			if (!c->linked) break;
+			c = (TranslationTableCharacter *)&table->ruleArea[c->linked];
+		}
+	}
+	return value;
+}
+
 /* Is the character sequence starting at chars[pos] preceded by a valid start of a
  * standing-alone sequence: the start of the string, a space or a seqdelimiter
  * character, possibly followed by seqbeforechars characters? */
@@ -137,11 +156,11 @@ _lou_inSequenceBefore(
 int EXPORT_CALL
 _lou_inSequenceAfter(const TranslationTableHeader *table, const widechar *chars,
 		int start, int length) {
-	// TODO: all caps words
 	int i;
 	for (i = start; i < length; i++) {
 		/* The patterns are stored one after the other, each terminated by a 0. The
-		 * first one that matches here is skipped. */
+		 * first one that matches here is skipped. Case is ignored, so that "'s"
+		 * also matches the "'S" of a word in capitals. */
 		int s = 0;
 		while (s < table->seqPatternsCount) {
 			int len = 0;
@@ -149,7 +168,9 @@ _lou_inSequenceAfter(const TranslationTableHeader *table, const widechar *chars,
 			while (s + len < table->seqPatternsCount && table->seqPatterns[s + len])
 				len++;
 			for (j = 0; j < len && i + j < length; j++)
-				if (chars[i + j] != table->seqPatterns[s + j]) break;
+				if (lowercaseOf(chars[i + j], table) !=
+						lowercaseOf(table->seqPatterns[s + j], table))
+					break;
 			if (len > 0 && j == len) {
 				if (i + len >= length) return 1;
 				i += len;

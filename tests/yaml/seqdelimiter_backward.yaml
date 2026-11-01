@@ -42,6 +42,7 @@ table: |
   word can 14
   word so 234
   contraction b
+  contraction B
   contraction c
   contraction s
   endword 's 3-234
@@ -69,6 +70,10 @@ tests:
   - [but's., ⠃⠄⠎⠲]
   - [but'll, ⠃⠄⠇⠇]
   - [but'd., ⠃⠄⠙⠲]
+  # the patterns match regardless of case
+  - [BUT'S, ⠠⠠⠃⠄⠠⠎]
+  - [B'S, ⠰⠠⠃⠄⠠⠎]
+  - [But'S, ⠠⠃⠄⠠⠎]
   # not standing alone: the word is spelled out in both directions
   - [b.c., ⠃⠲⠉⠲]
   - [.b, ⠲⠃]

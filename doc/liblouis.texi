@@ -1030,7 +1030,9 @@ For example, in UEB (section 2.6.4, page 18), the @samp{'d},
 @samp{'s}, @samp{'ll}, @samp{'ve}, etc. can be after a letter sequence
 provided the overall sequence is @emph{standing alone}.
 
-This opcode may be used multiple times, once per pattern.
+This opcode may be used multiple times, once per pattern. The
+pattern is matched regardless of case, so @samp{'s} also matches the
+@samp{'S} of a word written in capitals.
 
 Example:
 @example
