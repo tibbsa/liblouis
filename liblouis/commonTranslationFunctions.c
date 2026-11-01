@@ -93,3 +93,72 @@ _lou_handlePassVariableAction(const widechar *instructions, int *IC) {
 		return 0;
 	}
 }
+
+static const TranslationTableCharacter *
+findChar(widechar c, const TranslationTableHeader *table) {
+	static TranslationTableCharacter notFound = { NULL, -1, 0, 0, 0, CTC_Space, 0, 0, 32,
+		0, 0 };
+	unsigned long int makeHash = _lou_charHash(c);
+	TranslationTableOffset bucket = table->characters[makeHash];
+	while (bucket) {
+		TranslationTableCharacter *character =
+				(TranslationTableCharacter *)&table->ruleArea[bucket];
+		if (character->value == c) return character;
+		bucket = character->next;
+	}
+	notFound.value = c;
+	return &notFound;
+}
+
+static int
+hasAttr(widechar c, TranslationTableCharacterAttributes attributes,
+		const TranslationTableHeader *table) {
+	return (findChar(c, table)->attributes & attributes) != 0;
+}
+
+/* Is the character sequence starting at chars[pos] preceded by a valid start of a
+ * standing-alone sequence: the start of the string, a space or a seqdelimiter
+ * character, possibly followed by seqbeforechars characters? */
+int EXPORT_CALL
+_lou_inSequenceBefore(
+		const TranslationTableHeader *table, const widechar *chars, int pos) {
+	int i;
+	for (i = pos - 1; i >= 0; i--) {
+		if (hasAttr(chars[i], CTC_SeqBefore, table)) continue;
+		return hasAttr(chars[i], CTC_Space | CTC_SeqDelimiter, table);
+	}
+	return 1;
+}
+
+/* Is the character sequence that ends just before chars[start] followed by a
+ * valid end of a standing-alone sequence: seqafterchars characters and
+ * seqafterpattern strings, then the end of the string, a space or a seqdelimiter
+ * character? chars[start .. length - 1] is examined. */
+int EXPORT_CALL
+_lou_inSequenceAfter(const TranslationTableHeader *table, const widechar *chars,
+		int start, int length) {
+	// TODO: all caps words
+	int i;
+	for (i = start; i < length; i++) {
+		/* The patterns are stored one after the other, each terminated by a 0. The
+		 * first one that matches here is skipped. */
+		int s = 0;
+		while (s < table->seqPatternsCount) {
+			int len = 0;
+			int j;
+			while (s + len < table->seqPatternsCount && table->seqPatterns[s + len])
+				len++;
+			for (j = 0; j < len && i + j < length; j++)
+				if (chars[i + j] != table->seqPatterns[s + j]) break;
+			if (len > 0 && j == len) {
+				if (i + len >= length) return 1;
+				i += len;
+				break;
+			}
+			s += len + 1;
+		}
+		if (hasAttr(chars[i], CTC_SeqAfter, table)) continue;
+		return hasAttr(chars[i], CTC_Space | CTC_SeqDelimiter, table);
+	}
+	return 1;
+}
