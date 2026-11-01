@@ -113,6 +113,10 @@ tests:
   - [":]", ⠒⠨⠜]
   - ["paid)", ⠏⠙⠐⠜]
   - ["(paid)", ⠐⠣⠏⠙⠐⠜]
+  # from issue #892
+  - ["people)", ⠏⠐⠜]
+  - ["(\"go,\")", ⠐⠣⠦⠛⠂⠴⠐⠜]
+  - ["(\"people,\")", ⠐⠣⠦⠏⠂⠴⠐⠜]
   - ["https://", ⠓⠞⠞⠏⠎⠒⠸⠌⠸⠌]
 
   # Issue #1018: contraction of "there"
